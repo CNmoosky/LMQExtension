@@ -1,9 +1,9 @@
 //
-//  NSObject+MJCoding.m
-//  MJExtension
+//  NSObject+Coding.m
+//  LMQExtension
 //
 //  Created by mj on 14-1-15.
-//  Copyright (c) 2014年 itcast. All rights reserved.
+//  Copyright (c) 2014年 CNmoosky. All rights reserved.
 //
 
 #import "NSObject+Coding.h"
@@ -15,9 +15,9 @@
  */
 - (void)encode:(NSCoder *)encoder
 {
-    [self enumerateIvarsWithBlock:^(MJIvar *ivar, BOOL *stop) {
-        if (ivar.isSrcClassFromFoundation) return;
-        [encoder encodeObject:ivar.value forKey:ivar.name];
+    [self enumIvarsWithBlock:^(LMQIvar *ivar, BOOL *stop) {
+        if (ivar.isComeFromFoundation) return;
+        [encoder encodeObject:ivar.ivarValue forKey:ivar.name];
     }];
 }
 
@@ -26,9 +26,9 @@
  */
 - (void)decode:(NSCoder *)decoder
 {
-    [self enumerateIvarsWithBlock:^(MJIvar *ivar, BOOL *stop) {
-        if (ivar.isSrcClassFromFoundation) return;
-        ivar.value = [decoder decodeObjectForKey:ivar.name];
+    [self enumIvarsWithBlock:^(LMQIvar *ivar, BOOL *stop) {
+        if (ivar.isComeFromFoundation) return;
+        ivar.ivarValue = [decoder decodeObjectForKey:ivar.name];
     }];
 }
 @end
