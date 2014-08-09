@@ -7,6 +7,6 @@
 //
 
 
-#import "NSObject+Element.h"
 #import "NSObject+DictAndModel.h"
+#import "NSObject+Coding.h"
 

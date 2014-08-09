@@ -31,13 +31,21 @@
         if (ivar.isComeFromFoundation) return ;
         NSString *key = [self keyWithIvarName:ivar.ivarName];
         id value = dict[key];
+        if (!value) {
+            value = dict[ivar.ivarName];
+        }
+        if ([value isKindOfClass:[NSNull class]]) {
+            value = nil;
+        }
         
         if (!value) return;
         if (ivar.type.typeClass && !ivar.type.isFromFoundation) {
             value = [ivar.type.typeClass modelWithKeyValues:value];
         }else if ([self respondsToSelector:@selector(objectClassInArray)]){
             Class modelClass = self.objectClassInArray[ivar.ivarName];
-            if (modelClass) {
+            if (modelClass && [value isKindOfClass:[NSString class]]) {
+                
+            }else if (modelClass){
                 value = [modelClass modelArrayWithDictArray:value];
             }
         }
@@ -50,13 +58,28 @@
 
 + (instancetype)modelWithKeyValues:(NSDictionary *)dict
 {
+    if (dict == nil) {
+        return nil;
+    }
     if (![dict isKindOfClass:[NSDictionary class]]) {
-        [NSException raise:@"The keyvalues is not a NSDictionary" format:nil];
+        return nil;
     }
     id model = [[self alloc]init];
     [model setKeyValues:dict];
     return model;
 }
+
+- (void)modelWithDict:(NSDictionary *)dict
+{
+    if (dict == nil) {
+        return;
+    }
+    if (![dict isKindOfClass:[NSDictionary class]]) {
+        return;
+    }
+    [self setKeyValues:dict];
+}
+
 
 #pragma mark - ModelToDict
 
@@ -77,9 +100,9 @@
             }
         }
         NSString *key = [self keyWithIvarName:ivar.ivarName];
+        
         dict[key] = value;
     }];
-    
     return dict;
 }
 
@@ -87,33 +110,54 @@
 + (NSArray *)dictArrayWithModelArray:(NSArray *)modelArray
 {
     if (![modelArray isKindOfClass:[NSArray class]]) {
-        [NSException raise:@"The object is not a NSArray" format:nil];
         return modelArray;
     }
     NSMutableArray *dictArray = [NSMutableArray array];
-    for (id model in modelArray) {
-        [dictArray addObject:[model toDictionary]];
-    }
+    
+    [modelArray enumerateObjectsUsingBlock:^(id obj, NSUInteger idx, BOOL *stop) {
+        [dictArray addObject:[obj toDictionary]];
+        
+    }];
     
     return dictArray;
 }
 
 #pragma mark - DictArrayToModelArray
-+ (NSArray *)modelArrayWithDictArray:(NSArray *)dictArray
++ (NSMutableArray *)modelArrayWithDictArray:(NSArray *)dictArray
 {
     
     if (![dictArray isKindOfClass:[NSArray class]]) {
-        [NSException raise:@"The object is not a NSArray" format:nil];
-        return dictArray;
+        return (NSMutableArray *)dictArray;
     }
     NSMutableArray *modelArray = [NSMutableArray array];
-    for (NSDictionary *dict in dictArray) {
-        if (![dict isKindOfClass:[NSDictionary class]]) continue;
-        id model = [self modelWithKeyValues:dict];
-        [modelArray addObject:model];
-    }
+    
+    [dictArray enumerateObjectsUsingBlock:^(NSDictionary *    dict, NSUInteger idx, BOOL *   stop) {
+        if ([dict isKindOfClass:[NSDictionary class]]){
+            id model = [self modelWithKeyValues:dict];
+            [modelArray addObject:model];
+        }
+    }];
+    
+    //    for (NSDictionary *dict in dictArray) {
+    //        if (![dict isKindOfClass:[NSDictionary class]]) continue;
+    //        id model = [self modelWithKeyValues:dict];
+    //        [modelArray addObject:model];
+    //    }
     
     return modelArray;
 }
+
+
+#pragma mark 复制参数
+- (void)setValueWith:(id)object
+{
+    if (![object isKindOfClass:self.class]) return;
+    [self enumIvarsWith:object andBlock:^(LMQIvar *ivar1, LMQIvar *ivar2, BOOL *stop) {
+        id value = ivar2.ivarValue;
+        
+        ivar1.ivarValue = value;
+    }];
+}
+
 
 @end
